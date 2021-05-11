@@ -1,0 +1,82 @@
+
+% weights from the input nodes to the hidden nodes
+layer_one = randn(7,3);
+% weights from the hidden nodes to the output nodes
+layer_two = randn(3, 3);
+
+% test layer one with 3 input and 3 output neurons
+test_layer_1 = [1 0 0 ; 0 2 0 ; 0 0 3]; 
+test_bias_1 = [1 2 3]; 
+% test layer two with 3 input and 1 output neurons
+test_layer_2 = [3; 2; 0]; 
+test_bias_2 = [3];
+test_input = [1 1 1];
+
+[test_sums, test_act, test_out] = feedforward(test_input, test_layer_1, test_layer_2);
+test_err = 1;
+
+gradients,bias_gradients = backprop(test_err, test_sums, test_act, layer_two);
+
+
+% sigmoid function 
+function out = sig(x)
+    out = 1/(1 + exp(-x));
+end
+
+% sigmoid derivative
+function out = dsig(x) 
+    out = sig(x)*(1 - sig(x));
+end
+
+function [updated_layer_1,updated_bias1, updated_layer_2, updated_bias2] = update_weights(gradients,bias_gradients, learning_rate, layer_one,layer_one_bias, layer_two, layer_two_bias) 
+    updated_layer_1 = layer_one + learning_rate.* gradients{1}; 
+    updated_layer_2 = layer_two + learning_rate.*gradients{2};
+    updated_bias1 = layer_one_bias + learning_rate .* bias_gradients{1}; 
+    updated_bias2 = layer_two_bias + learning_rate .* bias_gradients{2}; 
+end
+
+% calculates the gradients for each layer 
+%
+function [gradients, bias_gradients] = backprop(error, weighted_sums, activations, layer_two)
+    % calculate the derivative of the weighted sum to the output layer
+    output_deriv = arrayfun(@(x) dsig(x), weighted_sums{2} );
+    output_delta = error.*output_deriv; 
+    % the gradient is the delta times the activation
+    layer_two_grad = transpose(activations{2})* output_delta;
+    
+    % calculate the derivative of the weighted sum to the hidden layer
+    hidden_deriv = arrayfun(@(x) dsig(x), weighted_sums{1}); 
+    
+    hidden_delta = (layer_two * transpose(output_delta)).*hidden_deriv;
+    layer_one_grad = delta * activations{1};
+    
+    
+    gradients = {};
+    gradients{2} = layer_two_grad; 
+    gradients{1} = layer_one_grad; 
+    
+    bias_gradients = {};
+    bias_gradients{1} = output_delta;
+    bias_gradients{2} = hidden_delta;
+end
+
+% Feed forwards a shallow 3 layer neural network 
+% input is a 1*N row vector, a N*M matrix of layer weights and a M*K output
+% layer matrix
+function [weighted_sums, activations, output] = feedforward(input, layer_one, bias_one, layer_two, bias_two ) 
+    % calculate the network times the input
+    weighted_sum1 = (input * layer_one) + bias_one;
+    % apply sigmoid activation
+    activation1 = arrayfun(@(x)sig(x) ,weighted_sum1);
+    % propagate the previous activation
+    weighted_sum2 = (activation1 * layer_two) + bias_two;
+    output = arrayfun(@(x)sig(x) ,weighted_sum2);
+    % store the weighted sums and activations for backpropagation
+    weighted_sums = {}; 
+    weighted_sums{1} = weighted_sum1;
+    weighted_sums{2} = weighted_sum2;
+    activations = {}; 
+    activations{1} = input; 
+    activations{2} = activation1; 
+
+end
