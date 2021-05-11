@@ -90,6 +90,7 @@ title("New Closed Loop Step Response")
 xlabel("Time (seconds)" ) 
 ylabel("Amplitude") 
 %% 
+% plot pid gains
 close all 
 
 figure(1) 
